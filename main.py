@@ -1,4 +1,4 @@
-from machine import Pin, I2C
+from machine import Pin, SoftI2C
 import bluetooth
 from BLE import BLEUART
 from MPU6050 import MPU6050
@@ -47,7 +47,7 @@ def main():
     uart = BLEUART(ble, name)
     uart.irq(handler=on_rx)
 
-    i2c = I2C(scl=Pin(22), sda=Pin(21))
+    i2c = SoftI2C(scl=Pin(22), sda=Pin(21))
     mpu = MPU6050(i2c)
     mpu.wake()
 
