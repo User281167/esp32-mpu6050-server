@@ -30,7 +30,10 @@ def loop():
         accel = mpu.read_accel_data()
         temp = mpu.read_temperature()
 
-        print(gyro, accel, temp)
+        print("Gyro : " + str(gyro))
+        print("Accel: " + str(accel))
+        print("Temp : " + str(temp))
+        print()
 
         sleep(0.1)
 
@@ -50,6 +53,13 @@ def main():
     i2c = SoftI2C(scl=Pin(22), sda=Pin(21))
     mpu = MPU6050(i2c)
     mpu.wake()
+
+    mpu.write_gyro_range(250)
+    mpu.write_accel_range(2)
+    mpu.write_lpf_range(44)
+
+    mpu.print_ranges()
+    sleep(5)
 
     loop()
 

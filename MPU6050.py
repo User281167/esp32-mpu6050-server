@@ -13,6 +13,35 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 
 import machine
 
+ACC_RANGES_TO_HEX = {
+    2: 0x00,
+    4: 0x08,
+    8: 0x10,
+    16: 0x18
+}
+
+
+GYRO_RANGES_TO_HEX = {
+    250: 0x00,
+    500: 0x08,
+    1000: 0x10,
+    2000: 0x18
+}
+
+LPF_RANGES_TO_HEX = {
+    5: 0x00,
+    10: 0x01,
+    21: 0x02,
+    44: 0x03,
+    94: 0x04,
+    184: 0x05,
+    260: 0x06
+}
+
+ACC_RANGES_TO_VALUE = {v: k for k, v in ACC_RANGES_TO_HEX.items()}
+GYRO_RANGES_TO_VALUE = {v: k for k, v in GYRO_RANGES_TO_HEX.items()}
+LPF_RANGES_TO_VALUE = {v: k for k, v in LPF_RANGES_TO_HEX.items()}
+
 
 class MPU6050:
     """Class for reading gyro rates and acceleration data from an MPU-6050 module via I2C."""
@@ -47,12 +76,13 @@ class MPU6050:
 
     def read_gyro_range(self) -> int:
         """Reads the gyroscope range setting."""
-        return self._hex_to_index(self.i2c.readfrom_mem(self.address, 0x1B, 1)[0])
+        value = (self.i2c.readfrom_mem(self.address, 0x1B, 1)[0])
+        return GYRO_RANGES_TO_VALUE[value]
 
     def write_gyro_range(self, range: int) -> None:
         """Sets the gyroscope range setting."""
         self.i2c.writeto_mem(self.address, 0x1B, bytes(
-            [self._index_to_hex(range)]))
+            [GYRO_RANGES_TO_HEX[range]]))
 
     def read_gyro_data(self) -> tuple[float, float, float]:
         """Read the gyroscope data, in a (x, y, z) tuple."""
@@ -60,13 +90,14 @@ class MPU6050:
         # set the modified based on the gyro range (need to divide to calculate)
         gr: int = self.read_gyro_range()
         modifier: float = None
-        if gr == 0:
+
+        if gr == 250:
             modifier = 131.0
-        elif gr == 1:
+        elif gr == 500:
             modifier = 65.5
-        elif gr == 2:
+        elif gr == 1000:
             modifier = 32.8
-        elif gr == 3:
+        elif gr == 2000:
             modifier = 16.4
 
         # read data
@@ -80,12 +111,13 @@ class MPU6050:
 
     def read_accel_range(self) -> int:
         """Reads the accelerometer range setting."""
-        return self._hex_to_index(self.i2c.readfrom_mem(self.address, 0x1C, 1)[0])
+        value = self.i2c.readfrom_mem(self.address, 0x1C, 1)[0]
+        return ACC_RANGES_TO_VALUE[value]
 
     def write_accel_range(self, range: int) -> None:
         """Sets the gyro accelerometer setting."""
-        self.i2c.writeto_mem(self.address, 0x1C, bytes(
-            [self._index_to_hex(range)]))
+        value = ACC_RANGES_TO_HEX[range]
+        self.i2c.writeto_mem(self.address, 0x1C, bytes([value]))
 
     def read_accel_data(self) -> tuple[float, float, float]:
         """Read the accelerometer data, in a (x, y, z) tuple."""
@@ -93,13 +125,14 @@ class MPU6050:
         # set the modified based on the gyro range (need to divide to calculate)
         ar: int = self.read_accel_range()
         modifier: float = None
-        if ar == 0:
+
+        if ar == 2:
             modifier = 16384.0
-        elif ar == 1:
+        elif ar == 4:
             modifier = 8192.0
-        elif ar == 2:
+        elif ar == 8:
             modifier = 4096.0
-        elif ar == 3:
+        elif ar == 16:
             modifier = 2048.0
 
         # read data
@@ -112,22 +145,16 @@ class MPU6050:
         return (x, y, z)
 
     def read_lpf_range(self) -> int:
-        return self.i2c.readfrom_mem(self.address, 0x1A, 1)[0]
+        value = self.i2c.readfrom_mem(self.address, 0x1A, 1)[0]
+        return LPF_RANGES_TO_VALUE[value]
 
     def write_lpf_range(self, range: int) -> None:
         """
         Sets low pass filter range.
-        :param range: Low pass range setting, 0-6. 0 = minimum filter, 6 = maximum filter.
         """
 
-        # check range
-        if range < 0 or range > 6:
-            raise Exception("Range '" + str(range) +
-                            "' is not a valid low pass filter setting.")
-
-        self.i2c.writeto_mem(self.address, 0x1A, bytes([range]))
-
-    #### UTILITY FUNCTIONS BELOW ####
+        value = LPF_RANGES_TO_HEX[range]
+        self.i2c.writeto_mem(self.address, 0x1A, bytes([value]))
 
     def _translate_pair(self, high: int, low: int) -> int:
         """Converts a byte pair to a usable value. Borrowed from https://github.com/m-rtijn/mpu6050/blob/0626053a5e1182f4951b78b8326691a9223a5f7d/mpu6050/mpu6050.py#L76C39-L76C39."""
@@ -136,30 +163,13 @@ class MPU6050:
             value = -((65535 - value) + 1)
         return value
 
-    def _hex_to_index(self, range: int) -> int:
-        """Converts a hexadecimal range setting to an integer (index), 0-3. This is used for both the gyroscope and accelerometer ranges."""
-        if range == 0x00:
-            return 0
-        elif range == 0x08:
-            return 1
-        elif range == 0x10:
-            return 2
-        elif range == 0x18:
-            return 3
-        else:
-            raise Exception(
-                "Found unknown gyro range setting '" + str(range) + "'")
+    def print_ranges(self) -> None:
+        """Prints the gyroscope and accelerometer ranges."""
 
-    def _index_to_hex(self, index: int) -> int:
-        """Converts an index integer (0-3) to a hexadecimal range setting. This is used for both the gyroscope and accelerometer ranges."""
-        if index == 0:
-            return 0x00
-        elif index == 1:
-            return 0x08
-        elif index == 2:
-            return 0x10
-        elif index == 3:
-            return 0x18
-        else:
-            raise Exception("Range index '" + index +
-                            "' invalid. Must be 0-3.")
+        print()
+        print("============= MPU6050 =============")
+        print("Gyro range : {} degrees/sec".format(self.read_gyro_range()))
+        print("Accel range: {} G".format(self.read_accel_range()))
+        print("LPF range  : {} Hz".format(self.read_lpf_range()))
+        print("==================================")
+        print()
