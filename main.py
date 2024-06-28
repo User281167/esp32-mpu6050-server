@@ -1,7 +1,7 @@
 from machine import Pin, SoftI2C
 import bluetooth
 from BLE import BLEUART
-from MPU6050 import MPU6050
+from MPU6050 import *
 from time import sleep
 
 uart = None
@@ -54,9 +54,12 @@ def main():
     mpu = MPU6050(i2c)
     mpu.wake()
 
-    mpu.write_gyro_range(250)
-    mpu.write_accel_range(2)
-    mpu.write_lpf_range(44)
+    mpu.write_gyro_range(GYRO_RANGE_250DPS)
+    mpu.write_accel_range(ACCEL_RANGE_2G)
+    mpu.write_lpf_range(LPF_RANGE_44HZ)
+
+    print("Calibrating...")
+    mpu.calibrate(az_0=False)
 
     mpu.print_ranges()
     sleep(5)

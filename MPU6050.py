@@ -12,14 +12,32 @@ THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR I
 """
 
 import machine
+from time import sleep
 
-ACC_RANGES_TO_HEX = {
+ACCEL_RANGE_2G = 2
+ACCEL_RANGE_4G = 4
+ACCEL_RANGE_8G = 8
+ACCEL_RANGE_16G = 16
+
+GYRO_RANGE_250DPS = 250
+GYRO_RANGE_500DPS = 500
+GYRO_RANGE_1000DPS = 1000
+GYRO_RANGE_2000DPS = 2000
+
+LPF_RANGE_5HZ = 5
+LPF_RANGE_10HZ = 10
+LPF_RANGE_21HZ = 21
+LPF_RANGE_44HZ = 44
+LPF_RANGE_94HZ = 94
+LPF_RANGE_184HZ = 184
+LPF_RANGE_260HZ = 260
+
+ACCEL_RANGES_TO_HEX = {
     2: 0x00,
     4: 0x08,
     8: 0x10,
     16: 0x18
 }
-
 
 GYRO_RANGES_TO_HEX = {
     250: 0x00,
@@ -38,7 +56,7 @@ LPF_RANGES_TO_HEX = {
     260: 0x06
 }
 
-ACC_RANGES_TO_VALUE = {v: k for k, v in ACC_RANGES_TO_HEX.items()}
+ACCEL_RANGES_TO_VALUE = {v: k for k, v in ACCEL_RANGES_TO_HEX.items()}
 GYRO_RANGES_TO_VALUE = {v: k for k, v in GYRO_RANGES_TO_HEX.items()}
 LPF_RANGES_TO_VALUE = {v: k for k, v in LPF_RANGES_TO_HEX.items()}
 
@@ -54,6 +72,9 @@ class MPU6050:
         """
         self.address = address
         self.i2c = i2c
+
+        self.accel_offset = (0, 0, 0)
+        self.gyro_offset = (0, 0, 0)
 
     def wake(self) -> None:
         """Wake up the MPU-6050."""
@@ -107,16 +128,20 @@ class MPU6050:
         y: float = (self._translate_pair(data[2], data[3])) / modifier
         z: float = (self._translate_pair(data[4], data[5])) / modifier
 
+        x -= self.gyro_offset[0]
+        y -= self.gyro_offset[1]
+        z -= self.gyro_offset[2]
+
         return (x, y, z)
 
     def read_accel_range(self) -> int:
         """Reads the accelerometer range setting."""
         value = self.i2c.readfrom_mem(self.address, 0x1C, 1)[0]
-        return ACC_RANGES_TO_VALUE[value]
+        return ACCEL_RANGES_TO_VALUE[value]
 
     def write_accel_range(self, range: int) -> None:
         """Sets the gyro accelerometer setting."""
-        value = ACC_RANGES_TO_HEX[range]
+        value = ACCEL_RANGES_TO_HEX[range]
         self.i2c.writeto_mem(self.address, 0x1C, bytes([value]))
 
     def read_accel_data(self) -> tuple[float, float, float]:
@@ -141,6 +166,10 @@ class MPU6050:
         x: float = (self._translate_pair(data[0], data[1])) / modifier
         y: float = (self._translate_pair(data[2], data[3])) / modifier
         z: float = (self._translate_pair(data[4], data[5])) / modifier
+
+        x -= self.accel_offset[0]
+        y -= self.accel_offset[1]
+        z -= self.accel_offset[2]
 
         return (x, y, z)
 
@@ -171,5 +200,49 @@ class MPU6050:
         print("Gyro range : {} degrees/sec".format(self.read_gyro_range()))
         print("Accel range: {} G".format(self.read_accel_range()))
         print("LPF range  : {} Hz".format(self.read_lpf_range()))
-        print("==================================")
+        print("Gyro offset: {}".format(self.gyro_offset))
+        print("Accel offset: {}".format(self.accel_offset))
+        print("===================================")
         print()
+
+    def calibrate(self, total_samples: int = 100, delay_ms: int = 100, az_0: bool = True) -> None:
+        """
+        Calibrates the gyroscope and accelerometer.
+
+        Args:
+            total_samples (int, optional): Number of samples to take. Defaults to 100.
+            delay (int, optional): Delay between samples in milliseconds. Defaults to 100.
+            az_0 (bool, optional): Whether to set the accelerometer z-axis offset to zero. The default value is True.
+        """
+
+        self.gyro_offset = (0, 0, 0)
+        self.accel_offset = (0, 0, 0)
+
+        gx, gy, gz = 0, 0, 0
+        ax, ay, az = 0, 0, 0
+
+        for _ in range(total_samples):
+            gyro = self.read_gyro_data()
+            accel = self.read_accel_data()
+
+            gx, gy, gz = gx + gyro[0], gy + gyro[1], gz + gyro[2]
+            ax, ay, az = ax + accel[0], ay + accel[1], az + accel[2]
+
+            sleep(delay_ms / 1000)
+
+        self.gyro_offset = (
+            gx / total_samples,
+            gy / total_samples,
+            gz / total_samples,
+        )
+
+        az /= total_samples
+
+        if not az_0:
+            az -= 1
+
+        self.accel_offset = (
+            ax / total_samples,
+            ay / total_samples,
+            az,
+        )
