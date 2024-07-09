@@ -46,7 +46,8 @@ def connect_ap():
 
     ap_if = network.WLAN(network.AP_IF)
     ap_if.active(True)
-    ap_if.config(essid=config.WIFI_SSID_AP, password=config.WIFI_PASSWD_AP)
+    ap_if.config(essid=config.WIFI_SSID_AP,
+                 authmode=network.AUTH_WPA2_PSK, password=config.WIFI_PASSWD_AP)
 
     while not ap_if.active():
         print("Waiting for connection...", end="\r")
@@ -85,28 +86,21 @@ def http_server(client, mpu):
 
     if method == "GET":
         if path == "/":
-            page = open("/pages/index.html", "r")
-            html = page.read()
-            # client[0].sendall(f"HTTP/1.1 200 OK {html}".encode("utf-8"))
-            # client[0].sendall(f"HTTP/1.1 200 OK {open("/pages/style.css").read()}".encode("utf-8"))
-            # page.close()
-            # client[0].close()
-            # page.close()
-            # client[0].send(b"HTTP/1.1 200 OK")
-            # client[0].send(b"Content-Type: text/html")
-            # client[0].send(open("/pages/index.html").read().encode("utf-8"))
-
-            client[0].sendall(
-                f"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n{html}".encode("utf-8"))
-
-            # client[0].send(b"Content-Type: text/css")
-            # client[0].send(open("/pages/style.css").read().encode("utf-8"))
-            client[0].close()
-            page.close()
+            with open("/pages/index.html", "r") as page:
+                html = page.read()
+                client[0].sendall(
+                    f"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n{html}\r\n".encode("utf-8"))
+                client[0].close()
+        elif path == "/style.css":
+            with open("/pages/style.css", "r") as file:
+                css = file.read()
+                client[0].sendall(
+                    f"HTTP/1.1 200 OK\r\nContent-Type: text/css\r\n{css}\r\n".encode("utf-8"))
+                client[0].close()
         elif path == "/stream":
             if not client in clients:
                 clients.append(client)
-        if path == "/gyro":
+        elif path == "/gyro":
             client[0].sendall(json.dumps(mpu.read_gyro_data()).encode("utf-8"))
             client[0].close()
         elif path == "/accel":
