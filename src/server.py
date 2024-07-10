@@ -83,14 +83,20 @@ def create_server(ap_if=True):
     socket_server.listen(5)
 
 
-def get_html(html_file) -> str:
-    res = ""
-
+def get_html(client, html_file):
     with open(html_file, "r") as page:
-        html = page.read()
-        res = f"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n{html}"
+        client[0].send("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n")
 
-    return res
+        while True:
+            html = page.read(1024)
+
+            if not html:
+                client[0].send("\r\n")
+                client[0].close()
+                print("End of file")
+                break
+
+            client[0].send(html)
 
 
 def http_server(client, mpu):
@@ -98,7 +104,7 @@ def http_server(client, mpu):
     import gc
 
     gc.collect()
-    print(gc.mem_free())
+    print("Free memory:", gc.mem_free())
 
     request = client[0].recv(1024).decode("utf-8")
     request_lines = request.split('\r\n')
@@ -108,35 +114,38 @@ def http_server(client, mpu):
 
     file_path = "/pages" + path
     file_type = path.split('.')[-1]
-    print(file_path)
+    print("Sending", file_path)
 
     if method == "GET":
         if path == "/":
             gc.collect()
-            res = get_html("pages/index.html")
+            res = get_html(client, "pages/index.html")
+            return
         elif path == "/aviator":
             gc.collect()
-            res = get_html("pages/aviator.html")
+            res = get_html(client, "pages/aviator.html")
+            return
         elif file_type == "css":
             gc.collect()
             with open(file_path, "r") as file:
                 css = file.read()
                 res = f"HTTP/1.1 200 OK\r\nContent-Type: text/css\r\n{css}"
         elif file_type == "js":
+            client[0].send(
+                "HTTP/1.1 200 OK\r\nContent-Type: text/javascript\r\n\r\n")
+
             with open(file_path, "r") as file:
                 while True:
-                    socket_server.settimeout(100)
                     gc.collect()
                     js = file.read(1024)
+
+                    if not js:
+                        break
 
                     try:
                         client[0].send(js.encode("utf-8"))
                     except:
                         break
-
-                    if not js:
-                        break
-                    socket_server.settimeout(0.5)
         elif path == "/stream":
             # send continuous stream of data
             if not client in clients:
