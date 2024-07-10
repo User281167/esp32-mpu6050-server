@@ -1,8 +1,3 @@
-import network
-import config
-import json
-import socket
-from time import sleep
 from _thread import start_new_thread
 
 socket_server = None
@@ -10,6 +5,9 @@ clients = []
 
 
 def connect_sta():
+    import network
+    import config
+
     sta_if = network.WLAN(network.STA_IF)
     sta_if.active(True)
 
@@ -43,6 +41,10 @@ def connect_sta():
 
 
 def connect_ap():
+    import network
+    import config
+    from time import sleep
+
     print("\nConnecting to " + config.WIFI_SSID_AP)
 
     ap_if = network.WLAN(network.AP_IF)
@@ -66,6 +68,9 @@ def create_server(ap_if=True):
         ap_if (bool, optional): Whether to connect to access point (True) or station (False). Defaults to True.
     """
 
+    import socket
+    import config
+
     global socket_server
 
     if ap_if:
@@ -78,7 +83,7 @@ def create_server(ap_if=True):
     socket_server.listen(5)
 
 
-def get_html(client, html_file) -> str:
+def get_html(html_file) -> str:
     res = ""
 
     with open(html_file, "r") as page:
@@ -89,6 +94,12 @@ def get_html(client, html_file) -> str:
 
 
 def http_server(client, mpu):
+    import json
+    import gc
+
+    gc.collect()
+    print(gc.mem_free())
+
     request = client[0].recv(1024).decode("utf-8")
     request_lines = request.split('\r\n')
     method, path, protocol = request_lines[0].split(' ')
@@ -101,17 +112,31 @@ def http_server(client, mpu):
 
     if method == "GET":
         if path == "/":
-            res = get_html(client[0], "pages/index.html")
+            gc.collect()
+            res = get_html("pages/index.html")
         elif path == "/aviator":
-            res = get_html(client[0], "pages/aviator.html")
+            gc.collect()
+            res = get_html("pages/aviator.html")
         elif file_type == "css":
+            gc.collect()
             with open(file_path, "r") as file:
                 css = file.read()
                 res = f"HTTP/1.1 200 OK\r\nContent-Type: text/css\r\n{css}"
         elif file_type == "js":
             with open(file_path, "r") as file:
-                js = file.read()
-                res = f"HTTP/1.1 200 OK\r\nContent-Type: text/javascript\r\n{js}"
+                while True:
+                    socket_server.settimeout(100)
+                    gc.collect()
+                    js = file.read(1024)
+
+                    try:
+                        client[0].send(js.encode("utf-8"))
+                    except:
+                        break
+
+                    if not js:
+                        break
+                    socket_server.settimeout(0.5)
         elif path == "/stream":
             # send continuous stream of data
             if not client in clients:
@@ -125,7 +150,8 @@ def http_server(client, mpu):
         else:
             res = "HTTP/1.1 404 NOT FOUND"
 
-        client[0].sendall(res.encode("utf-8"))
+        if not file_type == "js":
+            client[0].sendall(res.encode("utf-8"))
 
         if path != "/stream":
             client[0].close()
@@ -134,18 +160,23 @@ def http_server(client, mpu):
 
 
 def socket_accept(mpu):
-    while True:
-        client = socket_server.accept()
-        print("Client connected: {}\n".format(client[1]))
+    from _thread import start_new_thread
 
+    while True:
         try:
+            client = socket_server.accept()
+            print("Client connected: {}\n".format(client[1]))
             http_server(client, mpu)
-        except OSError as e:
-            print("Error with request")
-            print(e)
+            # start_new_thread(http_server, (client, mpu))
+        except Exception as e:
+            # OsError ValueError MemoryError
+            print("Error with request", e)
+            continue
 
 
 def send_stream(data):
+    import json
+
     for client in clients:
         try:
             client[0].send(json.dumps(data).encode("utf-8"))

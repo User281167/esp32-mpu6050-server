@@ -1,10 +1,7 @@
 from machine import Pin, SoftI2C
-import bluetooth
-from BLE import BLEUART
-from MPU6050 import *
 from time import sleep
-from _thread import start_new_thread
-from server import create_server, socket_accept, send_stream
+from MPU6050 import *
+
 
 uart = None
 led = Pin(2, Pin.OUT)
@@ -24,6 +21,8 @@ def on_rx():
 
 
 def loop():
+    from server import send_stream
+
     while True:
         gyro = mpu.read_gyro_data()
         accel = mpu.read_accel_data()
@@ -42,6 +41,11 @@ def loop():
 
 
 def main():
+    from _thread import start_new_thread
+    import bluetooth
+    from BLE import BLEUART
+    from server import create_server, socket_accept
+
     global uart
     global mpu
 
