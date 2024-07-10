@@ -62,13 +62,14 @@ def main():
     mpu.write_accel_range(ACCEL_RANGE_2G)
     mpu.write_lpf_range(LPF_RANGE_44HZ)
 
-    print("Calibrating...")
-    mpu.calibrate(az_0=False)
+    # print("Calibrating...")
+    # mpu.calibrate(az_0=False)
 
-    mpu.print_ranges()
+    # mpu.print_ranges()
 
-    start_new_thread(socket_accept, ([mpu]))
-    loop()
+    # start_new_thread(socket_accept, ([mpu]))
+    # loop()
+    socket_accept(mpu=mpu)
 
 
 if __name__ == "__main__":

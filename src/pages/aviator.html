@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="demo.css" />
+    <link rel="stylesheet" href="game.css" />
+    <title>Aviator</title>
+</head>
+
+<body>
+    <button id="settings-btn">
+        <svg height="2em"
+            viewBox="0 0 512 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. -->
+            <path
+                d="M495.9 166.6c3.2 8.7 .5 18.4-6.4 24.6l-43.3 39.4c1.1 8.3 1.7 16.8 1.7 25.4s-.6 17.1-1.7 25.4l43.3 39.4c6.9 6.2 9.6 15.9 6.4 24.6c-4.4 11.9-9.7 23.3-15.8 34.3l-4.7 8.1c-6.6 11-14 21.4-22.1 31.2c-5.9 7.2-15.7 9.6-24.5 6.8l-55.7-17.7c-13.4 10.3-28.2 18.9-44 25.4l-12.5 57.1c-2 9.1-9 16.3-18.2 17.8c-13.8 2.3-28 3.5-42.5 3.5s-28.7-1.2-42.5-3.5c-9.2-1.5-16.2-8.7-18.2-17.8l-12.5-57.1c-15.8-6.5-30.6-15.1-44-25.4L83.1 425.9c-8.8 2.8-18.6 .3-24.5-6.8c-8.1-9.8-15.5-20.2-22.1-31.2l-4.7-8.1c-6.1-11-11.4-22.4-15.8-34.3c-3.2-8.7-.5-18.4 6.4-24.6l43.3-39.4C64.6 273.1 64 264.6 64 256s.6-17.1 1.7-25.4L22.4 191.2c-6.9-6.2-9.6-15.9-6.4-24.6c4.4-11.9 9.7-23.3 15.8-34.3l4.7-8.1c6.6-11 14-21.4 22.1-31.2c5.9-7.2 15.7-9.6 24.5-6.8l55.7 17.7c13.4-10.3 28.2-18.9 44-25.4l12.5-57.1c2-9.1 9-16.3 18.2-17.8C227.3 1.2 241.5 0 256 0s28.7 1.2 42.5 3.5c9.2 1.5 16.2 8.7 18.2 17.8l12.5 57.1c15.8 6.5 30.6 15.1 44 25.4l55.7-17.7c8.8-2.8 18.6-.3 24.5 6.8c8.1 9.8 15.5 20.2 22.1 31.2l4.7 8.1c6.1 11 11.4 22.4 15.8 34.3zM256 336a80 80 0 1 0 0-160 80 80 0 1 0 0 160z" />
+        </svg>
+    </button>
+
+    <section id="container-mpu">
+        <h2>
+            MPU 6050 Data
+        </h2>
+
+        <ul id="mpu-data">
+            <li>
+                <p>
+                    Accelerometer
+                </p>
+                <p>
+                    X: <span id="ax"></span> g
+                </p>
+                <p>
+                    Y: <span id="ay"></span> g
+                </p>
+                <p>
+                    Z: <span id="az"></span> g
+                </p>
+            </li>
+
+            <li>
+                <p>
+                    Gyroscope
+                </p>
+                <p>
+                    X: <span id="gx"></span> rad/s
+                </p>
+                <p>
+                    Y: <span id="gy"></span> rad/s
+                </p>
+                <p>
+                    Z: <span id="gz"></span> rad/s
+                </p>
+            </li>
+
+            <li>
+                <p>
+                    Temperature
+                </p>
+                <p>
+                    <span id="temp"></span> °C
+                </p>
+            </li>
+        </ul>
+    </section>
+
+    <dialog id="mpu-settings-dialog">
+        <section>
+            <h2>
+                MPU 6050 Configuración
+            </h2>
+
+            <div class="dialog-control">
+                <label for="select-mpu-accelerometer-range">Rango de acelerometro</label>
+
+                <select name="select-mpu-accelerometer-range" id="accelerometer-range">
+                    <option value="2">+-2G</option>
+                    <option value="4">+-4G</option>
+                    <option value="8">+-8G</option>
+                    <option value="16">+-16G</option>
+                </select>
+
+            </div>
+
+            <div class="dialog-control">
+                <label for="select-mpu-gyroscope-range">Rango de giroscopio</label>
+
+                <select name="select-mpu-gyroscope-range" id="gyroscope-range">
+                    <option value="250">+- 250 deg/s</option>
+                    <option value="500">+- 500 deg/s</option>
+                    <option value="1000">+- 1000 deg/s</option>
+                    <option value="2000">+- 2000 deg/s</option>
+                </select>
+            </div>
+
+            <div class="dialog-control">
+                <label for="select-mpu-filter-band">Rango de filtro</label>
+
+                <select name="select-mpu-filter-band" id="filter-band">
+                    <option value="260">260 Hz</option>
+                    <option value="184">184 Hz</option>
+                    <option value="94">94 Hz</option>
+                    <option value="44">44 Hz</option>
+                    <option value="21">21 Hz</option>
+                    <option value="10">10 Hz</option>
+                    <option value="5">5 Hz</option>
+                </select>
+            </div>
+
+            <div class="dialog-control">
+                <label for="delay">Delay (ms)</label>
+                <input type="number" min="10" max="1000" step="10" value="100" name="delay" id="delay">
+            </div>
+
+        </section>
+
+        <menu>
+            <button id="cancel-btn" type="reset">Cancelar</button>
+            <button id="confirm-btn">Confirmar</button>
+        </menu>
+    </dialog>
+
+    <div class="game-holder" id="gameHolder">
+        <div class="header">
+            <h1><span>the</span>Aviator</h1>
+            <h2>fly it to the end</h2>
+            <div class="score" id="score">
+                <div class="score__content" id="level">
+                    <div class="score__label">level</div>
+                    <div class="score__value score__value--level" id="levelValue">1</div>
+                    <svg class="level-circle" id="levelCircle" viewbox="0 0 200 200">
+                        <circle id="levelCircleBgr" r="80" cx="100" cy="100" fill="none" stroke="#d1b790"
+                            stroke-width="24px" />
+                        <circle id="levelCircleStroke" r="80" cx="100" cy="100" fill="none" #f25346 stroke="#68c3c0"
+                            stroke-width="14px" stroke-dasharray="502" />
+                    </svg>
+                </div>
+                <div class="score__content" id="dist">
+                    <div class="score__label">distance</div>
+                    <div class="score__value score__value--dist" id="distValue">000</div>
+                </div>
+                <div class="score__content" id="energy">
+                    <div class="score__label">energy</div>
+                    <div class="score__value score__value--energy" id="energyValue">
+                        <div class="energy-bar" id="energyBar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="world" id="world"></div>
+        <div class="message message--replay" id="replayMessage">Click to Replay</div>
+        <div class="message message--instructions" id="instructions">Grab the blue pills<span>avoid the red ones</span>
+        </div>
+    </div>
+
+    <script src="mpuData.js"></script>
+    <script src="index.js"></script>
+    <script src="TweenMax.min.js"></script>
+    <script src="three.min.js"></script>
+    <script src="game.js" />
+    </script>
+</body>
+
+</html>

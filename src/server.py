@@ -3,6 +3,7 @@ import config
 import json
 import socket
 from time import sleep
+from _thread import start_new_thread
 
 socket_server = None
 clients = []
@@ -77,6 +78,16 @@ def create_server(ap_if=True):
     socket_server.listen(5)
 
 
+def get_html(client, html_file) -> str:
+    res = ""
+
+    with open(html_file, "r") as page:
+        html = page.read()
+        res = f"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n{html}"
+
+    return res
+
+
 def http_server(client, mpu):
     request = client[0].recv(1024).decode("utf-8")
     request_lines = request.split('\r\n')
@@ -84,36 +95,42 @@ def http_server(client, mpu):
 
     print(f"method = {method} path = {path} protocol = {protocol}")
 
+    file_path = "/pages" + path
+    file_type = path.split('.')[-1]
+    print(file_path)
+
     if method == "GET":
         if path == "/":
-            with open("/pages/index.html", "r") as page:
-                html = page.read()
-                client[0].sendall(
-                    f"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n{html}\r\n".encode("utf-8"))
-                client[0].close()
-        elif path == "/style.css":
-            with open("/pages/style.css", "r") as file:
+            res = get_html(client[0], "pages/index.html")
+        elif path == "/aviator":
+            res = get_html(client[0], "pages/aviator.html")
+        elif file_type == "css":
+            with open(file_path, "r") as file:
                 css = file.read()
-                client[0].sendall(
-                    f"HTTP/1.1 200 OK\r\nContent-Type: text/css\r\n{css}\r\n".encode("utf-8"))
-                client[0].close()
+                res = f"HTTP/1.1 200 OK\r\nContent-Type: text/css\r\n{css}"
+        elif file_type == "js":
+            with open(file_path, "r") as file:
+                js = file.read()
+                res = f"HTTP/1.1 200 OK\r\nContent-Type: text/javascript\r\n{js}"
         elif path == "/stream":
+            # send continuous stream of data
             if not client in clients:
                 clients.append(client)
         elif path == "/gyro":
-            client[0].sendall(json.dumps(mpu.read_gyro_data()).encode("utf-8"))
-            client[0].close()
+            res = json.dumps(mpu.read_gyro_data())
         elif path == "/accel":
-            client[0].sendall(json.dumps(
-                mpu.read_accel_data()).encode("utf-8"))
-            client[0].close()
+            res = json.dumps(mpu.read_accel_data())
         elif path == "/temp":
-            client[0].sendall(json.dumps(
-                mpu.read_temperature()).encode("utf-8"))
-            client[0].close()
+            res = json.dumps(mpu.read_temperature())
         else:
-            client[0].sendall(b"HTTP/1.1 404 NOT FOUND")
+            res = "HTTP/1.1 404 NOT FOUND"
+
+        client[0].sendall(res.encode("utf-8"))
+
+        if path != "/stream":
             client[0].close()
+
+        print("END HTTP")
 
 
 def socket_accept(mpu):
@@ -123,14 +140,15 @@ def socket_accept(mpu):
 
         try:
             http_server(client, mpu)
-        except OSError:
+        except OSError as e:
             print("Error with request")
+            print(e)
 
 
 def send_stream(data):
     for client in clients:
         try:
-            client[0].sendall(json.dumps(data).encode("utf-8"))
+            client[0].send(json.dumps(data).encode("utf-8"))
         except OSError:
             print("Client disconnected: {}\n".format(client[1]))
             client[0].close()

@@ -2,7 +2,7 @@
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: "Courier New", Courier, monospace;
+  font-family: "Consolas", Courier, monospace;
 }
 
 body {
@@ -10,8 +10,109 @@ body {
   margin: auto;
 }
 
+section {
+  display: flex;
+  flex-direction: column;
+  gap: 2em;
+}
+
 h1 {
   text-align: center;
   padding: 10px;
   font-size: 4em;
+}
+
+a {
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+#container-mpu {
+  font-size: 0.8rem;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1000;
+}
+
+#mpu-data {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  z-index: 1000;
+}
+
+#settings-btn {
+  padding: 0.5rem;
+  position: fixed;
+  top: 0;
+  right: 0;
+  background-color: transparent;
+  z-index: 1000;
+}
+
+#mpu-settings-dialog {
+  padding: 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  -webkit-border-radius: 0.5rem;
+  -moz-border-radius: 0.5rem;
+  -ms-border-radius: 0.5rem;
+  -o-border-radius: 0.5rem;
+
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -webkit-transform: translate(-50%, -50%);
+  -moz-transform: translate(-50%, -50%);
+  -ms-transform: translate(-50%, -50%);
+  -o-transform: translate(-50%, -50%);
+}
+
+#mpu-settings-dialog h2 {
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.dialog-control {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.dialog-control select,
+.dialog-control input {
+  border: none;
+  border-bottom: 1px solid #ccc;
+  outline: none;
+}
+
+#mpu-settings-dialog menu {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+button {
+  border: none;
+  padding: 0.5rem;
+}
+
+#mpu-object {
+  position: fixed;
+  width: 200px;
+  right: 0;
+  height: 100%;
 }
