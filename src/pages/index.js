@@ -13,7 +13,8 @@ const cancelBtn = document.getElementById("cancel-btn");
 const confirmBtn = document.getElementById("confirm-btn");
 const settingsBtn = document.getElementById("settings-btn");
 
-const gateway = `ws://${window.location.host}/ws`;
+// const gateway = `${window.location.host}/stream`;
+const gateway = `ws://${window.location.host}:80/stream`;
 let webSocket;
 
 function initWebSocket() {
@@ -21,10 +22,13 @@ function initWebSocket() {
   webSocket.onopen = onOpen;
   webSocket.onclose = onClose;
   webSocket.onmessage = onMessage;
+
+  alert(window.location.host);
 }
 
 function onOpen() {
   console.log("Connection open");
+  webSocket.send("GET /stream HTTP/1.1");
 }
 
 function onClose() {
@@ -82,4 +86,4 @@ confirmBtn.addEventListener("click", () => {
   mpuSettingsDialog.close();
 });
 
-// window.addEventListener("load", initWebSocket);
+window.addEventListener("load", initWebSocket);

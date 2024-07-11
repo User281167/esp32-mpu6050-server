@@ -68,12 +68,10 @@ def main():
 
     # print("Calibrating...")
     # mpu.calibrate(az_0=False)
-
     # mpu.print_ranges()
 
-    # start_new_thread(socket_accept, ([mpu]))
-    # loop()
-    socket_accept(mpu=mpu)
+    start_new_thread(socket_accept, ([mpu]))
+    loop()
 
 
 if __name__ == "__main__":

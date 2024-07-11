@@ -115,6 +115,7 @@ def http_server(client, mpu):
     file_path = "/pages" + path
     file_type = path.split('.')[-1]
     print("Sending", file_path)
+    res = ""
 
     if method == "GET":
         if path == "/":
@@ -159,7 +160,7 @@ def http_server(client, mpu):
         else:
             res = "HTTP/1.1 404 NOT FOUND"
 
-        if not file_type == "js":
+        if file_type != "js" and path != "/stream":
             client[0].sendall(res.encode("utf-8"))
 
         if path != "/stream":
@@ -176,8 +177,7 @@ def socket_accept(mpu):
             client = socket_server.accept()
             print("Client connected: {}\n".format(client[1]))
             http_server(client, mpu)
-            # start_new_thread(http_server, (client, mpu))
-        except Exception as e:
+        except OSError as e:
             # OsError ValueError MemoryError
             print("Error with request", e)
             continue
