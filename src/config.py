@@ -1,5 +1,5 @@
-WIFI_SSID = "Compre internet"
-WIFI_PASSWD = "24789183"
+WIFI_SSID = "your ssid"
+WIFI_PASSWD = "your password"
 
 WIFI_SSID_AP = "ESP32 Access Point"
 WIFI_PASSWD_AP = "12345678"
